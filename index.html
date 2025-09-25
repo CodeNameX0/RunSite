@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>무작위 사이트 이동</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #111;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      flex-direction: column;
+      text-align: center;
+    }
+    #goButton {
+      font-size: 2.5rem;
+      padding: 1.2rem 2.5rem;
+      background-color: #00bcd4;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-bottom: 20px;
+    }
+    #goButton:hover {
+      background-color: #0097a7;
+    }
+    #status {
+      font-size: 1.2rem;
+      color: #ccc;
+      margin-bottom: 10px;
+      height: 1.5rem;
+    }
+    #info {
+      font-size: 0.95rem;
+      color: #888;
+      max-width: 400px;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <button id="goButton" onclick="goToRandomRealSite()">무작위 사이트로 이동</button>
+  <div id="status"></div>
+  <div id="info">
+    ※ 이 버튼은 무작위로 생성된 웹 주소 중<br>
+    실제로 존재하는 사이트가 있을 경우 이동합니다.<br>
+    연타를 하다 보면 무작위 사이트가 나올 겁니다.
+  </div>
+
+  <script>
+    let animationInterval;
+
+    function startSearchingAnimation() {
+      const status = document.getElementById("status");
+      let dots = 0;
+      animationInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        status.textContent = "찾는 중입니다" + ".".repeat(dots);
+      }, 500);
+    }
+
+    function stopSearchingAnimation(message) {
+      clearInterval(animationInterval);
+      document.getElementById("status").textContent = message;
+    }
+
+    function generateRandomDomain() {
+      const chars = "abcdefghijklmnopqrstuvwxyz";
+      let domain = "";
+      for (let i = 0; i < 6; i++) {
+        domain += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return "https://" + domain + ".com";
+    }
+
+    async function checkDomain(url) {
+      try {
+        await fetch(url, { method: "HEAD", mode: "no-cors" });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function goToRandomRealSite() {
+      startSearchingAnimation();
+      let found = false;
+
+      while (!found) {
+        const batch = Array.from({ length: 5 }, () => generateRandomDomain());
+        const checks = await Promise.all(batch.map(url => checkDomain(url)));
+
+        for (let i = 0; i < checks.length; i++) {
+          if (checks[i]) {
+            stopSearchingAnimation("이동 중: " + batch[i]);
+            window.location.href = batch[i];
+            found = true;
+            break;
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 100)); // 살짝 딜레이
+      }
+    }
+  </script>
+</body>
+</html>
